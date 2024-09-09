@@ -51,7 +51,7 @@ android {
 
 dependencies {
 
-    implementation("ai.pubtech:pubconsent:1.0.0")
+    implementation("ai.pubtech:pubconsent:1.3.0")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
