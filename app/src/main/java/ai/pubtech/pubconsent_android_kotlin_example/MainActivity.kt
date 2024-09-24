@@ -15,6 +15,8 @@ import ai.pubtech.pubconsent_android_kotlin_example.ui.theme.Pubconsentandroidko
 import ai.pubtech.pubconsent.Cmp
 import ai.pubtech.pubconsent.CmpCallbacks
 import ai.pubtech.pubconsent.CmpConfig
+import ai.pubtech.pubconsent.CmpType
+import ai.pubtech.pubconsent.TCFGDPRConsentApi
 import ai.pubtech.pubconsent.dto.GoogleConsentModeStatus
 import ai.pubtech.pubconsent.dto.GoogleConsentModeType
 import ai.pubtech.pubconsent.ui.CmpUIConfig
@@ -39,7 +41,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
-    var cmpInstance: Cmp? = null;
+    var cmpInstance: Cmp? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,12 +56,15 @@ class MainActivity : ComponentActivity() {
         val cmp: Cmp = cmpInstance as Cmp
 
         val cmpCallbacks = CmpCallbacks(
-            {
-                CmpLogger.d("Consent ready")
-                CmpLogger.d("Vendor expo is enabled: ${cmp.isVendorConsentEnabled(1)}")
-                CmpLogger.d("Features: ${cmp.isFeatureCookiesEnabled()}")
-                CmpLogger.d("User Experience: ${cmp.isUserExperienceCookiesEnabled()}")
-                CmpLogger.d("Measurement: ${cmp.isMeasurementCookiesEnabled()}")
+            { consentApiInterface ->
+                if (consentApiInterface.getCmpType() == CmpType.TCF_V2_GDPR) {
+                    consentApiInterface as TCFGDPRConsentApi
+                    CmpLogger.d("FROM MY APP consent ready and it's a TCF V2 GDPR")
+                    CmpLogger.d("Vendor expo is enabled: ${consentApiInterface.isVendorConsentEnabled(1)}")
+                    CmpLogger.d("Features: ${consentApiInterface.isFeatureCookiesEnabled()}")
+                    CmpLogger.d("User Experience: ${consentApiInterface.isUserExperienceCookiesEnabled()}")
+                    CmpLogger.d("Measurement: ${consentApiInterface.isMeasurementCookiesEnabled()}")
+                }
             },
             {
                 CmpLogger.d("CMP closed")
@@ -77,11 +82,15 @@ class MainActivity : ComponentActivity() {
                         GoogleConsentModeType.AD_STORAGE -> "FirebaseAnalytics.ConsentType.AD_STORAGE"
                         GoogleConsentModeType.AD_USER_DATA -> "FirebaseAnalytics.ConsentType.AD_USER_DATA"
                         GoogleConsentModeType.AD_PERSONALIZATION -> "FirebaseAnalytics.ConsentType.AD_PERSONALIZATION"
+                        GoogleConsentModeType.FUNCTIONALITY_STORAGE -> "Optional - See docs"
+                        GoogleConsentModeType.PERSONALIZATION_STORAGE -> "Optional - See docs"
+                        GoogleConsentModeType.SECURITY_STORAGE -> "Optional - See docs"
                     }
 
                     val firebaseConsentStatus = when (entry.value) {
                         GoogleConsentModeStatus.GRANTED -> "FirebaseAnalytics.ConsentStatus.GRANTED"
                         GoogleConsentModeStatus.DENIED -> "FirebaseAnalytics.ConsentStatus.DENIED"
+                        GoogleConsentModeStatus.UNKNOWN -> "Unmapped - See docs"
                     }
 
                     firebaseConsentType to firebaseConsentStatus
@@ -99,7 +108,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PubconsentandroidkotlinexampleTheme {
                 Scaffold(modifier = Modifier.fillMaxSize(), containerColor = Orange) { it ->
-                    PageExample({ cmp.askConsent(this) }, { print("Google Vendor Status Enabled: ${cmp.isVendorConsentEnabled(755)}") }, it)
+                    PageExample({ cmp.askConsent(this)}, it)
                 }
             }
         }
@@ -109,7 +118,7 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun PageExample(openCmpCallback: () -> Unit, debugInfoCallback: () -> Unit, paddingValues: PaddingValues) {
+fun PageExample(openCmpCallback: () -> Unit, paddingValues: PaddingValues) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -179,21 +188,6 @@ fun PageExample(openCmpCallback: () -> Unit, debugInfoCallback: () -> Unit, padd
                         color = Color.White
                     )
                 }
-
-                Button(
-                    onClick = {
-                        debugInfoCallback()
-                    },
-                    colors = ButtonDefaults.buttonColors(Purple40),
-                    modifier = Modifier
-                        .background(Purple40, shape = RoundedCornerShape(8.dp))
-                        .padding(8.dp)
-                ) {
-                    Text(
-                        text = "Print Info",
-                        color = Color.White
-                    )
-                }
             }
         }
     }
@@ -206,7 +200,6 @@ fun GreetingPreview() {
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
             PageExample(
                 { print("Hi, it's a preview! You clicked the Open CMP button") },
-                { print("Hi, it's a preview! You clicked the Debug Info button") },
                 innerPadding
             )
         }
