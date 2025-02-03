@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PubconsentandroidkotlinexampleTheme {
                 Scaffold(modifier = Modifier.fillMaxSize(), containerColor = Orange) { it ->
-                    PageExample({ cmp.askConsent(this)}, it)
+                    PageExample({ cmp.showNotice(this)}, it)
                 }
             }
         }
